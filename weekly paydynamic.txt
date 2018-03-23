@@ -1,0 +1,313 @@
+USE [shield]
+GO
+
+/****** Object:  StoredProcedure [dbo].[sp_weeklypay]    Script Date: 01-12-2017 10:18:48 AM ******/
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+
+CREATE PROCEDURE [dbo].[sp_weeklypay]    
+(@frmdate datetime,@todate datetime,@id int=0)    
+AS    
+BEGIN    
+DECLARE @empid int,    
+ @TotalHours int,    
+ @fin_nric_id varchar(50),    
+ @firstname varchar(100),    
+ @basic_salary decimal(18,2),    
+ @gross_salary decimal(18,2),    
+ @cpf_flg bit,    
+ @dob datetime,    
+ @basic_sal decimal(18,2),    
+ @OT_pay decimal(18,2),    
+ @Attendancest varchar(100),    
+ @mode_name varchar(100),    
+ @pay_mode varchar(100),    
+ @photo varchar(100),    
+ @sitename varchar(100),    
+ @designation_name varchar(100),    
+ @daily_pay_sal decimal(18,2),    
+ @daily_empe_cpf decimal(18,2),    
+ @daily_empr_cpf decimal(18,2),    
+    
+    
+ @emp_paytype int,    
+ @totaldays int,    
+ @passport_type int,    
+ @employee_cpf decimal(18,2),    
+ @employer_cpf decimal(18,2),    
+ @overall_gross_sal decimal(18,2),    
+ @total_pay_amt decimal(18,2),    
+ @cpf_amt decimal(18,2),    
+ @paid_amt decimal(18,2),    
+ @OT_Hrs decimal(18,2),    
+ @work_type int,    
+     
+ @shift_type int,    
+ @StartDate datetime,    
+ @EndDate datetime,    
+ @lastdate datetime,    
+ @work_day int,    
+ @no_of_day int,    
+ @no_work_day int,    
+ @no_of_days_week decimal(18,2),    
+ @no_of_hours_week decimal(18,2),    
+ @empe_cpf_amt decimal(18,2),    
+ @empr_cpf_amt decimal(18,2),    
+    
+ @reg_times decimal(18,2),    
+ @OT_times decimal(18,2),    
+ @RD_times decimal(18,2),    
+ @PH_times decimal(18,2),    
+ @RD_OT_times decimal(18,2),    
+ @PH_OT_times decimal(18,2),    
+ @workhours decimal(18,2),    
+ @othours decimal(18,2),    
+    
+ @PT_reg_times decimal(18,2),    
+ @PT_OT_times decimal(18,2),    
+ @PT_RD_times decimal(18,2),    
+ @PT_PH_times decimal(18,2),    
+ @PT_RD_OT_times decimal(18,2),    
+ @PT_PH_OT_times decimal(18,2),    
+ @totalamount decimal(18,2),    
+ @paidamt decimal(18,2);    
+    
+     
+ DECLARE @DailyPayTbl TABLE(empid int,TotalHours int,StartDate datetime,empe_cpf_amt decimal(18,2),    
+ totalamount decimal(18,2),overall_gross_sal decimal(18,2),paid_amt decimal(18,2),shift_type int);      
+    
+ If @id=0     
+ BEGIN    
+    
+  DECLARE WH_cursor CURSOR STATIC LOCAL FOR    
+  select t1.id as empid,CASE WHEN (t2.checktime is NULL) THEN 0 ELSE 12 END as Totalhours,t1.firstname,t1.fin_nric_id,    
+  CASE WHEN (t2.checktime is NULL) THEN 'Absent' ELSE 'Present' END as Attendancest,sm1.basic_salary,sm1.gross_salary,t1.emp_paytype,t1.dob,t6.no_of_days_week,t6.no_of_hours_week,t1.passport_type,t7.mode_name,t1.pay_mode,t1.photo,e2.sitename,e3.designation_name,   
+  ISNULL(t9.payamt,0) AS payamt,ISNULL(t9.cpf_amt,0) AS cpf_amt,ISNULL(t9.total_amt,0) AS total_amt ,CAST(t2.checktime AS DATE) as StartDate,t2.shift_type,t1.work_type,isnull(t1.daily_pay_sal,0) as daily_pay_sal,isnull(t1.daily_empe_cpf,0) as daily_empe_cpf,isnull(t1.daily_empr_cpf,0) as daily_empr_cpf  from tbl_employees t1   
+  LEFT OUTER JOIN tbl_attendance_details t2 on t2.empid = t1.id and t2.deleted = 0 And t2.login_cnt = 1 And t2.checktype = 'I' AND CAST(t2.checktime AS DATE)  BETWEEN @frmdate AND @todate AND t2.deleted=0    
+  LEFT OUTER JOIN  tbl_employee_salary_management sm1 ON t1.id = sm1.empid    
+  LEFT OUTER JOIN tbl_client_sites e2 ON e2.id = t2.siteid and e2.deleted = 0    
+  JOIN tbl_designations e3 ON e3.id = t1.designation and e3.deleted = 0    
+  JOIN tbl_work_types t6 ON t6.id = t1.work_type and t6.deleted = 0          
+  JOIN pay_modes t7 ON t1.pay_mode = t7.id and t7.deleted = 0          
+  INNER JOIN (SELECT MAX(effective_date) AS effective_date,empid FROM tbl_employee_salary_management WHERE deleted=0 AND           
+  activeflg=1 AND CAST(effective_date AS DATE)<= CAST(GETDATE() AS DATE) GROUP  BY empid) sm ON sm1.deleted=0 AND sm1.activeflg=1 AND           
+  sm.effective_date=sm1.effective_date AND sm.empid=sm1.empid     
+  LEFT OUTER JOIN  tbl_advance_payments t9 ON CAST(t9.paydate AS DATE)=CAST(t2.checktime AS DATE) AND t2.empid=t9.empid     
+  AND t9.deleted=0 AND t2.shift_type=t9.shift_type    
+  WHERE t1.emp_paytype = 2  and t1.deleted = 0 and (t1.relieve_date is null or CAST(t1.relieve_date as date) >= @frmdate) ORDER BY t1.firstname,t2.checktime;    
+    
+    
+    
+     
+ END    
+ Else    
+ BEGIN    
+    
+  DECLARE WH_cursor CURSOR STATIC LOCAL FOR    
+ select t1.id as empid,CASE WHEN (t2.checktime is NULL) THEN 0 ELSE 12 END as Totalhours,t1.firstname,t1.fin_nric_id,    
+  CASE WHEN (t2.checktime is NULL) THEN 'Absent' ELSE 'Present' END as Attendancest,sm1.basic_salary,sm1.gross_salary,t1.emp_paytype,t1.dob,t6.no_of_days_week,t6.no_of_hours_week,t1.passport_type,t7.mode_name,t1.pay_mode,t1.photo,e2.sitename,e3.designation_name,   
+  ISNULL(t9.payamt,0) AS payamt,ISNULL(t9.cpf_amt,0) AS cpf_amt,ISNULL(t9.total_amt,0) AS total_amt ,CAST(t2.checktime AS DATE) as StartDate,t2.shift_type,t1.work_type,isnull(t1.daily_pay_sal,0) as daily_pay_sal,isnull(t1.daily_empe_cpf,0) as daily_empe_cpf,isnull(t1.daily_empr_cpf,0) as daily_empr_cpf  from tbl_employees t1    
+  LEFT OUTER JOIN tbl_attendance_details t2 on t2.empid = t1.id and t2.deleted = 0 And t2.login_cnt = 1  And t2.checktype = 'I' AND CAST(t2.checktime AS DATE)  BETWEEN @frmdate AND @todate AND t2.deleted=0    
+  LEFT OUTER JOIN  tbl_employee_salary_management sm1 ON t1.id = sm1.empid    
+  LEFT OUTER JOIN tbl_client_sites e2 ON e2.id = t2.siteid and e2.deleted = 0    
+  JOIN tbl_designations e3 ON e3.id = t1.designation and e3.deleted = 0    
+  JOIN tbl_work_types t6 ON t6.id = t1.work_type and t6.deleted = 0          
+  JOIN pay_modes t7 ON t1.pay_mode = t7.id and t7.deleted = 0          
+  INNER JOIN (SELECT MAX(effective_date) AS effective_date,empid FROM tbl_employee_salary_management WHERE deleted=0 AND           
+  activeflg=1 AND CAST(effective_date AS DATE)<= CAST(GETDATE() AS DATE) GROUP  BY empid) sm ON sm1.deleted=0 AND sm1.activeflg=1 AND           
+  sm.effective_date=sm1.effective_date AND sm.empid=sm1.empid     
+  LEFT OUTER JOIN  tbl_advance_payments t9 ON CAST(t9.paydate AS DATE)=CAST(t2.checktime AS DATE) AND t2.empid=t9.empid     
+  AND t9.deleted=0 AND t2.shift_type=t9.shift_type    
+  WHERE t1.emp_paytype = 2 AND t1.id=@id ORDER BY t1.firstname,t2.checktime;    
+    
+    
+      
+    
+     
+ END    
+    
+ SELECT @reg_times=T.P1,@OT_times=T.P2,@RD_times=T.P4,@PH_times=T.P5,@RD_OT_times=T.P6,@PH_OT_times=T.P7,     
+ @PT_reg_times=T.P8,@PT_OT_times=T.P9,@PT_RD_times=T.P11,@PT_PH_times=T.P12,@PT_RD_OT_times=T.P13,@PT_PH_OT_times=T.P14    
+ FROM (SELECT  [1] AS P1, [2] AS P2,[4] AS P4, [5] AS P5,[6] AS P6,[7] AS P7,[8] AS P8,[9] AS P9,[11] AS P11,[12] AS P12,[13] AS P13,[14] AS P14    
+    FROM  (SELECT p1.no_of_time,p2.id as ptype FROM pay_allocations p1,pay_types p2 WHERE p1.deleted=0 AND p2.deleted=0 AND     
+ p1.paytype=p2.id  AND p1.acc_type=1 AND p1.activeflg=1 ) t1 PIVOT  ( Max(no_of_time)      
+ FOR ptype IN ([1], [2],[4], [5],[6],[7],[8],[9], [11],[12],[13],[14])) AS PivotTable) T;     
+    
+ OPEN WH_cursor;     
+    
+ FETCH NEXT FROM WH_cursor INTO  @empid ,@TotalHours,@firstname,@fin_nric_id,@Attendancest,@basic_salary,@gross_salary,    
+ @emp_paytype,@dob,@no_of_days_week,@no_of_hours_week,@passport_type,@mode_name,@pay_mode,    
+ @photo,@sitename,@designation_name,@paidamt,@cpf_amt,@total_pay_amt,@StartDate,@shift_type,@work_type,@daily_pay_sal,@daily_empe_cpf,@daily_empr_cpf;    
+    
+ -- Load Settings    
+ SELECT @cpf_flg=enable_cpf FROM tbl_company WHERE  deleted=0 AND activeflg=1;    
+    
+ WHILE @@FETCH_STATUS = 0      
+ BEGIN      
+    
+    
+ -- Check for Not Paid for an Employee    
+  if(@total_pay_amt=0)    
+  BEGIN    
+    
+    
+  if(@work_type = 1)    
+  BEGIN    
+    
+   SET @totaldays=DATEPART(DAY, DATEADD(s,-1,DATEADD(mm, DATEDIFF(m,0,@frmdate)+1,0)) -4)    
+   SET @lastdate=DATEADD(s,-1,DATEADD(mm, DATEDIFF(m,0,@frmdate)+1,0))    
+    
+    IF(@TotalHours > 8)    
+     BEGIN     
+      SET @workhours = 8;    
+      SET @othours = @TotalHours - 8 -1;    
+     END    
+    ELSE    
+     BEGIN    
+      SET @workhours = @TotalHours;    
+      SET @othours = 0;    
+     END    
+    
+      
+     
+     --SET @totalamount =CONVERT(DECIMAL(10,2),(((12*@basic_salary)/(52.0 * @no_of_days_week)) * (@workhours / 8)));    
+     SET @totalamount =CONVERT(DECIMAL(10,2),(((@basic_salary)/(@totaldays)) * (@workhours / 8)));    
+     SET @OT_pay=CONVERT(DECIMAL(10,2),(12*@basic_salary)/(52.0 * @no_of_hours_week) * @othours * @OT_times);    
+     SET @overall_gross_sal = @totalamount + @OT_pay;    
+    
+ -- Check for Employee CPF    
+     SET @employee_cpf=0    
+     SET @employer_cpf=0    
+    
+     SET @empe_cpf_amt=0    
+     SET @empr_cpf_amt=0    
+           
+    
+     If @passport_type=1 OR  @passport_type=2     
+     BEGIN     
+       If @cpf_flg=1    
+         BEGIN    
+           DECLARE @age int;    
+           SET @age=CAST(FLOOR(DATEDIFF(DAY,@dob,CAST(@todate AS DATE))/365.25) AS int)    
+           EXEC sp_getCPF  @age,@employee_cpf OUTPUT,@employer_cpf OUTPUT    
+              
+           SET @empe_cpf_amt=round(CONVERT(DECIMAL(10,2),(@overall_gross_sal*@employee_cpf/100.0)),0)    
+           SET @empr_cpf_amt=round(CONVERT(DECIMAL(10,2),(@overall_gross_sal*@employer_cpf/100.0)),0)    
+         END    
+    
+        If (@empe_cpf_amt IS NULL)    
+         SET @empe_cpf_amt=0    
+           
+     END    
+    
+  --   DECLARE @DailyPayTbl TABLE(empid int,TotalHours decimal(10,2),StartDate datetime,empe_cpf_amt decimal(18,2),    
+ -- totalamount decimal(18,2),overall_gross_sal decimal(18,2),paid_amt decimal(18,2));      
+     
+    INSERT INTO @DailyPayTbl VALUES(@empid,@TotalHours,@StartDate,@empe_cpf_amt,(@overall_gross_sal-@empe_cpf_amt),@overall_gross_sal,0,@shift_type);    
+  END    
+    
+     
+  ElSE    
+    
+  BEGIN    
+   SET @totaldays=DATEPART(DAY, DATEADD(s,-1,DATEADD(mm, DATEDIFF(m,0,@frmdate)+1,0)) -4)    
+   SET @lastdate=DATEADD(s,-1,DATEADD(mm, DATEDIFF(m,0,@frmdate)+1,0))    
+    
+    IF(@TotalHours > 8)    
+     BEGIN     
+      SET @workhours = 8;    
+      SET @othours = @TotalHours - 8 -1;    
+     END    
+    ELSE    
+     BEGIN    
+      SET @workhours = @TotalHours;    
+      SET @othours = 0;    
+     END    
+    
+      
+     
+     --SET @totalamount =CONVERT(DECIMAL(10,2),(((12*@basic_salary)/(52.0 * @no_of_days_week)) * (@workhours / 8)));    
+     SET @totalamount =CONVERT(DECIMAL(10,2),((@daily_pay_sal/12.5)*8* (@workhours / 8)));    
+     SET @OT_pay=CONVERT(DECIMAL(10,2),(@daily_pay_sal/12.5) * @othours * @OT_times);    
+     SET @overall_gross_sal = @totalamount + @OT_pay;    
+    
+ -- Check for Employee CPF    
+     SET @employee_cpf=0    
+     SET @employer_cpf=0    
+     if(@TotalHours > 0)    
+     BEGIN    
+     SET @cpf_amt = @daily_empe_cpf + @daily_empr_cpf    
+     SET @empe_cpf_amt=@cpf_amt    
+     END    
+     Else    
+     BEGIN    
+     SET @cpf_amt = 0    
+     SET @empe_cpf_amt=@cpf_amt    
+     END    
+     --SET @empr_cpf_amt=@cpf_amt    
+         
+    
+     INSERT INTO @DailyPayTbl VALUES(@empid,@TotalHours,@StartDate,@empe_cpf_amt,(@overall_gross_sal-@empe_cpf_amt),@overall_gross_sal,0,@shift_type);    
+  END    
+      
+  --   Already Paid     
+   END    
+  ELSE    
+   BEGIN    
+    
+    INSERT INTO @DailyPayTbl VALUES(@empid,@TotalHours,@StartDate,@cpf_amt,(@total_pay_amt-@cpf_amt),@total_pay_amt,@paidamt,@shift_type);    
+    
+   END    
+    
+   -- SELECT @empid,@TotalHours,@StartDate,@cpf_amt,(@total_pay_amt-@cpf_amt),@total_pay_amt,@paidamt;    
+    
+    
+  FETCH NEXT FROM WH_cursor INTO @empid ,@TotalHours,@firstname,@fin_nric_id,@Attendancest,@basic_salary,@gross_salary,    
+ @emp_paytype,@dob,@no_of_days_week,@no_of_hours_week,@passport_type,@mode_name,@pay_mode,@photo,@sitename,@designation_name,    
+ @paidamt,@cpf_amt,@total_pay_amt,@StartDate,@shift_type,@work_type,@daily_pay_sal,@daily_empe_cpf,@daily_empr_cpf;    
+    
+ END    
+     
+ -- SELECT * FROM @DailyPayTbl;    
+      
+     
+      
+    
+ CLOSE WH_cursor;     
+ DEALLOCATE WH_cursor;    
+    
+ If @id=0     
+ BEGIN    
+    
+  SELECT t2.id AS empid,(t2.firstname + ISNULL(' '+ t2.lastname,'')) AS firstname,t2.fin_nric_id AS nric_id,t2.photo,ISNULL(t3.mode_name,'Cash') AS mode_name,    
+  0 AS Payid,t2.pay_mode,SUM(t1.empe_cpf_amt) AS empe_cpf_amt,SUM(t1.TotalHours) AS TotalHours,SUM(t1.overall_gross_sal) AS overall_gross_sal,    
+  SUM(t1.paid_amt) AS PayAmt,SUM(t1.totalamount) AS  totalamount, MAX(t1.overall_gross_sal) AS perday_sal,MAX(t1.empe_cpf_amt) AS perday_cpf,    
+  CONVERT(VARCHAR, @todate,103) AS StartDate,1 as shift_type    
+  FROM @DailyPayTbl t1 INNER JOIN tbl_employees t2 ON t1.empid=t2.id     
+  LEFT OUTER JOIN pay_modes t3 ON t2.pay_mode=t3.id     
+  GROUP BY t2.id,t2.firstname,t2.lastname,t2.fin_nric_id,t2.photo,t3.mode_name,t2.pay_mode ORDER BY  t2.firstname,t2.lastname;    
+ END    
+ ELSE    
+ BEGIN    
+ SELECT t2.id AS empid,(t2.firstname + ISNULL(' '+ t2.lastname,'')) AS firstname,t2.fin_nric_id AS nric_id,t2.photo,ISNULL(t3.mode_name,'Cash') AS mode_name,    
+  0 AS Payid,t2.pay_mode,SUM(t1.empe_cpf_amt) AS empe_cpf_amt,SUM(t1.TotalHours) AS TotalHours,SUM(t1.overall_gross_sal) AS overall_gross_sal,    
+  SUM(t1.paid_amt) AS PayAmt,SUM(t1.totalamount) AS  totalamount, MAX(t1.overall_gross_sal) AS perday_sal,MAX(t1.empe_cpf_amt) AS perday_cpf,    
+  CONVERT(VARCHAR, @todate,103) AS StartDate,1 as shift_type    
+  FROM @DailyPayTbl t1 INNER JOIN tbl_employees t2 ON t1.empid=t2.id     
+  LEFT OUTER JOIN pay_modes t3 ON t2.pay_mode=t3.id     
+  GROUP BY t2.id,t2.firstname,t2.lastname,t2.fin_nric_id,t2.photo,t3.mode_name,t2.pay_mode ORDER BY  t2.firstname,t2.lastname;  
+ END    
+    
+END     
+
+
+
+
+
+
+GO
+
