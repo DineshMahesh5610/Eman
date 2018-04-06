@@ -1,0 +1,36 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Schema Namespace="EmanModel" Alias="Self" annotation:UseStrongSpatialTypes="false" xmlns:annotation="http://schemas.microsoft.com/ado/2009/02/edm/annotation" xmlns:customannotation="http://schemas.microsoft.com/ado/2013/11/edm/customannotation" xmlns="http://schemas.microsoft.com/ado/2009/11/edm">
+  <EntityType Name="company">
+    <Key>
+      <PropertyRef Name="id" />
+    </Key>
+    <Property Name="id" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+    <Property Name="companyname" Type="String" MaxLength="150" FixedLength="false" Unicode="true" />
+    <Property Name="branchname" Type="String" MaxLength="150" FixedLength="false" Unicode="true" />
+    <Property Name="email_id" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
+    <Property Name="fax_no" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
+    <Property Name="phone_no" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
+    <Property Name="company_logo" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
+    <Property Name="deleted" Type="Boolean" />
+    <Property Name="activeflg" Type="Boolean" />
+    <Property Name="created_date" Type="DateTime" Precision="3" />
+    <Property Name="modified_date" Type="DateTime" Precision="3" />
+  </EntityType>
+  <EntityType Name="user_login">
+    <Key>
+      <PropertyRef Name="id" />
+    </Key>
+    <Property Name="id" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+    <Property Name="username" Type="String" MaxLength="150" FixedLength="false" Unicode="true" />
+    <Property Name="password" Type="String" MaxLength="150" FixedLength="false" Unicode="true" />
+    <Property Name="emp_id" Type="Int32" />
+    <Property Name="deleted" Type="Boolean" />
+    <Property Name="activeflg" Type="Boolean" />
+    <Property Name="created_date" Type="DateTime" Precision="3" />
+    <Property Name="modified_date" Type="DateTime" Precision="3" />
+  </EntityType>
+  <EntityContainer Name="EmanEntities1" annotation:LazyLoadingEnabled="true">
+    <EntitySet Name="companies" EntityType="Self.company" />
+    <EntitySet Name="user_login" EntityType="Self.user_login" />
+  </EntityContainer>
+</Schema>
