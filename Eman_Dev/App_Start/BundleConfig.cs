@@ -21,6 +21,8 @@ namespace Eman_Dev
 
             bundles.Add(new ScriptBundle("~/bundles/bootstrap").Include(
                       "~/Scripts/bootstrap.js",
+                      "~/js/bootstrap.min.js",
+                      "~/js/bootstrap-progressbar.min.js",
                       "~/Scripts/respond.js"));
 
             bundles.Add(new StyleBundle("~/Content/css").Include(

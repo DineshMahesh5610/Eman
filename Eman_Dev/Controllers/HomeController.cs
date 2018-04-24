@@ -26,5 +26,11 @@ namespace Eman_Dev.Controllers
 
             return View();
         }
+
+        public ActionResult dashboard()
+        {
+            return View();
+        }
+       
     }
 }

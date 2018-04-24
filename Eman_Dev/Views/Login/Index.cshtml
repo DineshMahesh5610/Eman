@@ -15,6 +15,8 @@
     <link rel="stylesheet" type="text/css" href="CSS/main.css">
     <script src="http://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    <script src="../Scripts/Login/login.js"></script>
+    <script src="../Scripts/commonvalidation.js"></script>
     <style>
         body, html {
             background-position: center;
@@ -31,26 +33,29 @@
     <!--form start-->
     <div class="container-fluid background1">
         <div class="row">
+            
             <div class="col-md-4 col-sm-4 col-xs-12"></div>
             <div class="col-md-4 col-sm-4 col-xs-12"  style="background-color:white">
                 <!--form start-->
+                <div id="alert_placeholder"></div>
                 <form class="form-container" action="submission_sucess.html" method="post" onsubmit="return checkinfo();">
                     <div class="form-group">
+                        
                         <h1>Login Form</h1>
 
                         <label for="exampleInputEmail1">User Name</label>
-                        <input type="email" class="form-control" id="exampleInputEmail1" placeholder="Email">
+                        <input type="email" class="form-control" id="txtusername" name="txtusername" placeholder="Email">
                     </div>
                     <div class="form-group">
                         <label for="exampleInputPassword1">Password</label>
-                        <input type="password" class="form-control" id="exampleInputPassword1" placeholder="Password">
+                        <input type="password" class="form-control" id="txtpassword" name="txtpassword" placeholder="Password">
                     </div>
                     <div class="checkbox">
                         <label>
                             <input type="checkbox"> Remember Me
                         </label>
                     </div>
-                    <button type="submit" class="btn btn-success btn-block">Submit</button>
+                    <button type="button" class="btn btn-success btn-block" onclick="fnCheckLogin()">Submit</button>
                 </form>
                 <!--form end-->
             </div>
@@ -58,6 +63,7 @@
             </div>
         </div>
     </div>
+    
 
 </body>
 </html>
